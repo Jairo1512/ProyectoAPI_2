@@ -13,12 +13,16 @@ public class ProductosController : ControllerBase
         _context = context;
     }
 
-    
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Producto>>> GetProductos()
+
+    [HttpPost]
+    [Route ("Crear")]
+    public async Task<ActionResult<Producto>> PostProducto(Producto producto)
     {
-        return await _context.Productos.ToListAsync();
+        _context.Productos.Add(producto);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetProducto), new { id = producto.Id }, producto);
     }
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Producto>> GetProducto(int id)
@@ -28,24 +32,16 @@ public class ProductosController : ControllerBase
         return producto;
     }
 
-   
-    [HttpPost]
-    public async Task<ActionResult<Producto>> PostProducto(Producto producto)
-    {
-        _context.Productos.Add(producto);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetProducto), new { id = producto.Id }, producto);
-    }
-
-    
     [HttpPut("{id}")]
     public async Task<IActionResult> PutProducto(int id, Producto producto)
     {
-        if (id != producto.Id) return BadRequest();
+        if (id != producto.Id)
+            return BadRequest();
         _context.Entry(producto).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProducto(int id)
