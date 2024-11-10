@@ -1,51 +1,33 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MiProyectoWeb.Models;
-using MiProyectoWeb.Services;
 using Proyecto_web_API.Models;
+using System.Security.Cryptography.Xml;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-public class ProductoController : Controller
+namespace Proyecto_web_API.Controllers
 {
-    private readonly ProductoService _productoService;
-
-    public ProductoController(ProductoService productoService)
+    public class ProductoController : Controller
     {
-        _productoService = productoService;
+        private readonly HttpClient _httpClient;
+
+        public ProductoController(IHttpClientFactory httpClientFactory)
+        {
+            _httpClient = httpClientFactory.CreateClient();
+            _httpClient.BaseAddress = new Uri("https://localhost:7032/api");
+        }
+        public async Task<IActionResult> Index()
+        {
+           var response = await _httpClient.GetAsync("api/Productos/lista");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var productos = JsonSerializer.Deserialize<IEnumerable<ProductoViewModel>>(content);
+                return View("Imdex", productos);
+            }
+
+            return View(new List<ProductoViewModel>());
+
+        }
     }
-
-    public async Task<IActionResult> Index()
-    {
-        var productos = await _productoService.GetProductosAsync();
-        return View(productos);
-    }
-
-    public IActionResult Create() => View();
-
-    [HttpPost]
-    public async Task<IActionResult> Create(Producto producto)
-    {
-        await _productoService.AddProductoAsync(producto);
-        return RedirectToAction(nameof(Index));
-    }
-
-    public async Task<IActionResult> Edit(int id)
-    {
-        var producto = await _productoService.GetProductoAsync(id);
-        if (producto == null) return NotFound();
-        return View(producto);
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> Edit(Producto producto)
-    {
-        await _productoService.UpdateProductoAsync(producto);
-        return RedirectToAction(nameof(Index));
-    }
-
-    public async Task<IActionResult> Delete(int id)
-    {
-        var producto = await _productoService.GetProductoAsync(id);
-        if (producto == null) return NotFound(); return View(producto);
-    }
-
 }
-
